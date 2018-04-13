@@ -1,5 +1,6 @@
 ﻿using System;
 using DasMulli.Win32.ServiceUtils;
+using FoxyLink.RabbitMQ;
 
 namespace FoxyLink
 {
@@ -17,15 +18,12 @@ namespace FoxyLink
 
         public void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback)
         {
-            //GlobalConfiguration.Configuration.UseWebAppHost("test");
-
-            // Start coolness and return
-
+            GlobalConfiguration.Configuration.UseRabbitMQHost();
         }
 
         public void Stop()
         {
-            // shut it down again
+            QueueHost.Current.Close();
         }
 
         ~Service()
