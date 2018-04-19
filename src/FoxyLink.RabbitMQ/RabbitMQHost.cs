@@ -122,9 +122,12 @@ namespace FoxyLink.RabbitMQ
                 content.Headers.Add("ReplyTo", props.ReplyTo);
                 content.Headers.Add("Timestamp", props.Timestamp.UnixTime.ToString());
 
-                foreach (var header in props.Headers)
+                if (props.Headers != null)
                 {
-                    content.Headers.Add(header.Key, Encoding.UTF8.GetString((byte[])header.Value));  
+                    foreach (var header in props.Headers)
+                    {
+                        content.Headers.Add(header.Key, Encoding.UTF8.GetString((byte[])header.Value));
+                    }
                 }
                 
                 var cts = new CancellationTokenSource();
