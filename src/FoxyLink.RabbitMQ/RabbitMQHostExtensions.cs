@@ -22,8 +22,8 @@ namespace FoxyLink.RabbitMQ
             if (configuration == null) throw new ArgumentNullException(nameof(configuration));
             if (options == null) throw new ArgumentNullException(nameof(options));
 
-            var webHost = new RabbitMQHost(options);
-            return configuration.UseQueueHost(webHost);
+            var queueHost = new RabbitMQHost(options);
+            return configuration.UseQueueHost(queueHost);
         }
     }
 }

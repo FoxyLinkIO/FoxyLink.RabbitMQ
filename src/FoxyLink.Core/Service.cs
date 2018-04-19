@@ -18,7 +18,15 @@ namespace FoxyLink
 
         public void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback)
         {
-            GlobalConfiguration.Configuration.UseRabbitMQHost();
+            GlobalConfiguration.Configuration.ConfigureAppEndpoints();
+            GlobalConfiguration.Configuration.UseRabbitMQHost(new RabbitMQHostOptions()
+            {
+                HostName = Configuration.Current["AccessData:RabbitMQ:HostName"],
+                UserName = Configuration.Current["AccessData:RabbitMQ:UserName"],
+                Password = Configuration.Current["AccessData:RabbitMQ:Password"],
+                InvalidMessageQueue = Configuration.Current["AccessData:RabbitMQ:InvalidMessageQueue"]
+            });
+            
         }
 
         public void Stop()

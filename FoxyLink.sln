@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3A2CE073-118
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxyLink.GlobalConfiguration", "src\FoxyLink.GlobalConfiguration\FoxyLink.GlobalConfiguration.csproj", "{5CEC12AD-61C3-46C4-9759-76892C3F7A8A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxyLink.RabbitMQ", "src\FoxyLink.RabbitMQ\FoxyLink.RabbitMQ.csproj", "{B19181A4-D9DD-43E9-BC38-066DEC05BA67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxyLink.RabbitMQ", "src\FoxyLink.RabbitMQ\FoxyLink.RabbitMQ.csproj", "{B19181A4-D9DD-43E9-BC38-066DEC05BA67}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +36,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{A6C188E2-83CF-4F7A-A4E5-18D0FF4BA88E} = {3A2CE073-118C-442F-9170-F90E920C9D71}
 		{5CEC12AD-61C3-46C4-9759-76892C3F7A8A} = {3A2CE073-118C-442F-9170-F90E920C9D71}
+		{B19181A4-D9DD-43E9-BC38-066DEC05BA67} = {3A2CE073-118C-442F-9170-F90E920C9D71}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {38618320-2F11-4821-A115-85754696E8A0}

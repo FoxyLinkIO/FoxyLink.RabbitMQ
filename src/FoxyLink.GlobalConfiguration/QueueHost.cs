@@ -15,7 +15,7 @@ namespace FoxyLink
                 {
                     if (_current == null)
                     {
-                        throw new InvalidOperationException("QueueHost.Current property value has not been initialized. You must set it before using DataBank Client or Server API.");
+                        throw new InvalidOperationException("QueueHost.Current property value has not been initialized. You must set it before using QueueHost.");
                     }
 
                     return _current;
