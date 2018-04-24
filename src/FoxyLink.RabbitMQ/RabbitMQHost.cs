@@ -120,8 +120,11 @@ namespace FoxyLink.RabbitMQ
                 content.Headers.Add("CorrelationId", props.CorrelationId);
                 content.Headers.Add("MessageId", props.MessageId);
                 content.Headers.Add("ReplyTo", props.ReplyTo);
-                content.Headers.Add("Timestamp", props.Timestamp.UnixTime.ToString());
-
+                if (props.Timestamp.UnixTime > 0)
+                {
+                    content.Headers.Add("Timestamp", props.Timestamp.UnixTime.ToString());
+                }
+                
                 if (props.Headers != null)
                 {
                     foreach (var header in props.Headers)
