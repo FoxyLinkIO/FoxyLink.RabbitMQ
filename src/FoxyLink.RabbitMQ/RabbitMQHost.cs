@@ -48,7 +48,7 @@ namespace FoxyLink.RabbitMQ
                 Task.Run(async () => await ProcessMessage(ea));
             };
 
-            _consumerTag = _channel.BasicConsume(queue: "1c.foxylink",
+            _consumerTag = _channel.BasicConsume(queue: _options.MessageQueue,
                 autoAck: false, consumer: consumer);
 
         }

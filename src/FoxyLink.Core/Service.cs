@@ -24,6 +24,7 @@ namespace FoxyLink
                 HostName = Configuration.Current["AccessData:RabbitMQ:HostName"],
                 UserName = Configuration.Current["AccessData:RabbitMQ:UserName"],
                 Password = Configuration.Current["AccessData:RabbitMQ:Password"],
+                MessageQueue = Configuration.Current["AccessData:RabbitMQ:MessageQueue"],
                 InvalidMessageQueue = Configuration.Current["AccessData:RabbitMQ:InvalidMessageQueue"]
             });
             
