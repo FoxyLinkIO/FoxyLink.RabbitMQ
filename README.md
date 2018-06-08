@@ -50,7 +50,7 @@ Starting with .NET Core 2.0, you don't have to run `dotnet restore` because it's
 
 ```cmd
 > cd src\FoxyLink.Core
-> dotnet run --register-service
+> dotnet run -c Release --register-service
 ...
 Successfully registered and started service "FoxyLink.RabbitMQ Service" ("FoxyLink.RabbitMQ (extract, transform, deliver messages to the «1C:Enterprise 8» consumers)")
 ```
