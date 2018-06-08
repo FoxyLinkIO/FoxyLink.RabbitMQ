@@ -97,24 +97,39 @@ namespace FoxyLink.RabbitMQ
                 using (var model = connection.CreateModel())
                 {
                     var eProps = model.CreateBasicProperties();
-                    eProps.AppId = props.AppId;
-                    eProps.ContentEncoding = props.ContentEncoding;
-                    eProps.ContentType = props.ContentType;
+
+                    if (!String.IsNullOrWhiteSpace(props.AppId))
+                    {
+                        eProps.AppId = props.AppId;
+                    }
+
+                    if (!String.IsNullOrWhiteSpace(props.ContentEncoding))
+                    {
+                        eProps.ContentEncoding = props.ContentEncoding;
+                    }
+
+                    if (!String.IsNullOrWhiteSpace(props.ContentType))
+                    {
+                        eProps.ContentType = props.ContentType;
+                    }
 
                     if (!String.IsNullOrWhiteSpace(props.CorrelationId))
                     {
                         eProps.CorrelationId = props.CorrelationId;
                     }
 
-                    eProps.CorrelationId = props.CorrelationId;
                     eProps.DeliveryMode = props.DeliveryMode;
 
                     if (!String.IsNullOrWhiteSpace(props.MessageId))
                     {
                         eProps.MessageId = props.MessageId;
                     }
-                   
-                    eProps.ReplyTo = props.ReplyTo;
+
+                    //if (!String.IsNullOrWhiteSpace(props.ReplyTo))
+                    //{
+                    //    eProps.ReplyTo = props.ReplyTo;
+                    //}
+
                     eProps.Timestamp = props.Timestamp;
 
                     if (!String.IsNullOrWhiteSpace(props.Type))
