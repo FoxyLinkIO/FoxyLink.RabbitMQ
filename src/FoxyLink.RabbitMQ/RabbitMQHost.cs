@@ -54,12 +54,15 @@ namespace FoxyLink.RabbitMQ
                     try
                     {
                         await SendMessageToEndpoint(ea);
-                        channel.BasicAck(deliveryTag: ea.DeliveryTag,
-                            multiple: false);
                     }
                     catch (Exception ex)
                     {
                         MoveToInvalidQueue(ea.BasicProperties, ex.ToString());
+                    }
+                    finally
+                    {
+                        channel.BasicAck(deliveryTag: ea.DeliveryTag,
+                            multiple: false);
                     }
                 };
                 channel.BasicConsume(consumer, _options.MessageQueue,
