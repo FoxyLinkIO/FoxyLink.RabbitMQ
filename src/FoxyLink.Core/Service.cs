@@ -19,15 +19,27 @@ namespace FoxyLink
         public void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback)
         {
             GlobalConfiguration.Configuration.ConfigureAppEndpoints();
+
+            if (!UInt16.TryParse(Configuration.Current["AccessData:RabbitMQ:PrefetchCount"], 
+                out UInt16 prefetch)) 
+            {
+                prefetch = 5;
+            }
+
+            if (!Int32.TryParse(Configuration.Current["AccessData:RabbitMQ:NodesCount"],
+                out Int32 nodes))
+            {
+                nodes = 1;
+            }
+
             GlobalConfiguration.Configuration.UseRabbitMQHost(new RabbitMQHostOptions()
             {
-                HostName = Configuration.Current["AccessData:RabbitMQ:HostName"],
-                UserName = Configuration.Current["AccessData:RabbitMQ:UserName"],
-                Password = Configuration.Current["AccessData:RabbitMQ:Password"],
+                AmqpUri = Configuration.Current["AccessData:RabbitMQ:AmqpUri"],
                 MessageQueue = Configuration.Current["AccessData:RabbitMQ:MessageQueue"],
-                InvalidMessageQueue = Configuration.Current["AccessData:RabbitMQ:InvalidMessageQueue"]
+                InvalidMessageQueue = Configuration.Current["AccessData:RabbitMQ:InvalidMessageQueue"],
+                NodesCount = nodes,
+                PrefetchCount = prefetch
             });
-            
         }
 
         public void Stop()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -16,9 +17,8 @@ namespace FoxyLink.RabbitMQ
         private readonly RabbitMQHostOptions _options;
 
         private bool disposed = false;
-        private String _consumerTag;
-        private IModel _channel;
-        private IConnection _connection;
+        private List<IModel> _channels = new List<IModel>();
+        private List<IConnection> _connections = new List<IConnection>();
 
         public RabbitMQHost()
             : this(new RabbitMQHostOptions())
@@ -29,51 +29,55 @@ namespace FoxyLink.RabbitMQ
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
 
+            SetUpQueues();
+
             var factory = new ConnectionFactory()
             {
-                HostName = _options.HostName,
-                UserName = _options.UserName,
-                Password = _options.Password 
+                AutomaticRecoveryEnabled = true,
+                DispatchConsumersAsync = true,
+                TopologyRecoveryEnabled = true,
+                Uri = new Uri(_options.AmqpUri)
             };
-
-            factory.AutomaticRecoveryEnabled = true;
-            factory.TopologyRecoveryEnabled = true;
-
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
-
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (model, ea) =>
+  
+            for (var i = 0; i < _options.NodesCount; i++)
             {
-                Task.Run(async () => await ProcessMessage(ea));
-            };
+                var connection = factory.CreateConnection();
+                _connections.Add(connection);
 
-            _consumerTag = _channel.BasicConsume(queue: _options.MessageQueue,
-                autoAck: false, consumer: consumer);
+                var channel = connection.CreateModel();
+                _channels.Add(channel);
 
+                channel.BasicQos(0, _options.PrefetchCount, false);
+                var consumer = new AsyncEventingBasicConsumer(channel);
+                consumer.Received += async (o, ea) =>
+                {
+                    try
+                    {
+                        await SendMessageToEndpoint(ea);
+                        channel.BasicAck(deliveryTag: ea.DeliveryTag,
+                            multiple: false);
+                    }
+                    catch (Exception ex)
+                    {
+                        MoveToInvalidQueue(ea.BasicProperties, ex.ToString());
+                    }
+                };
+                channel.BasicConsume(consumer, _options.MessageQueue,
+                    autoAck: false);
+            }
         }
 
-        private async Task ProcessMessage(Object obj)
+        private void SetUpQueues()
         {
-            var eventArgs = (BasicDeliverEventArgs)obj;
-            var props = eventArgs.BasicProperties;
-            var replyProps = _channel.CreateBasicProperties();
-
-            try
+            var factory = new ConnectionFactory();
+            factory.Uri = new Uri(_options.AmqpUri);
+            using (var connection = factory.CreateConnection())
             {
-                await SendMessageToEndpoint(eventArgs);
-            }
-            catch(ArgumentException ex)
-            {
-                MoveToInvalidQueue(props, ex.ToString());
-            }
-            catch (Exception ex)
-            {
-                MoveToInvalidQueue(props, ex.ToString());
-            }
-            finally
-            {
-                _channel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
+                using (var model = connection.CreateModel())
+                {
+                    model.QueueDeclare(_options.MessageQueue, true, false, false, null);
+                    model.QueueDeclare(_options.InvalidMessageQueue, true, false, false, null);
+                }
             }
         }
 
@@ -83,18 +87,54 @@ namespace FoxyLink.RabbitMQ
             var log = JsonConvert.SerializeObject(error);
             var body = Encoding.UTF8.GetBytes(log);
 
-            if (props.ReplyTo != null)
+            var factory = new ConnectionFactory();
+            factory.Uri = new Uri(_options.AmqpUri);
+            using (var connection = factory.CreateConnection())
             {
-                _channel.BasicPublish(exchange: "",
-                    routingKey: props.ReplyTo,
-                    basicProperties: props,
-                    body: body);
-            }
+                using (var model = connection.CreateModel())
+                {
+                    var eProps = model.CreateBasicProperties();
+                    eProps.AppId = props.AppId;
+                    eProps.ContentEncoding = props.ContentEncoding;
+                    eProps.ContentType = props.ContentType;
 
-            _channel.BasicPublish(exchange: "",
-                                routingKey: _options.InvalidMessageQueue,
-                                basicProperties: props,
-                                body: body);
+                    if (!String.IsNullOrWhiteSpace(props.CorrelationId))
+                    {
+                        eProps.CorrelationId = props.CorrelationId;
+                    }
+
+                    eProps.CorrelationId = props.CorrelationId;
+                    eProps.DeliveryMode = props.DeliveryMode;
+
+                    if (!String.IsNullOrWhiteSpace(props.MessageId))
+                    {
+                        eProps.MessageId = props.MessageId;
+                    }
+                   
+                    eProps.ReplyTo = props.ReplyTo;
+                    eProps.Timestamp = props.Timestamp;
+
+                    if (!String.IsNullOrWhiteSpace(props.Type))
+                    {
+                        eProps.Type = props.Type;
+                    }
+
+                    if (props.ReplyTo != null)
+                    {
+                        model.BasicPublish(exchange: "",
+                            routingKey: props.ReplyTo,
+                            basicProperties: eProps,
+                            body: body);
+                    }
+                    else
+                    {
+                        model.BasicPublish(exchange: "",
+                            routingKey: _options.InvalidMessageQueue,
+                            basicProperties: props,
+                            body: body);
+                    }
+                }
+            }
         }
 
         private async Task SendMessageToEndpoint(BasicDeliverEventArgs eventArgs)
@@ -206,8 +246,17 @@ namespace FoxyLink.RabbitMQ
 
             // unmanaged objects here
 
-            _channel?.Close();
-            _connection?.Close();
+            foreach (var channel in _channels)
+            {
+                channel?.Dispose();
+            }
+            _channels.Clear();
+
+            foreach (var connection in _connections)
+            {
+                connection?.Dispose();
+            }
+            _connections.Clear();
 
             disposed = true;
 
