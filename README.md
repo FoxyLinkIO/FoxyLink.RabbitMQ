@@ -17,27 +17,27 @@
     "AppEndpoints": [
       {
         "Name": "yt11",
-        "Login": "*****",
-        "Password": "*****",
+        "Login": "login",
+        "Password": "password",
         "Schema": "http",
-        "ServerName": "1cweb.ktc.local:",
+        "ServerName": "1cweb.ktc.local:9292",
         "PathOnServer": "yt11/hs/AppEndpoint/v1"
       },
       {
         "Name": "dt11",
-        "Login": "*****",
-        "Password": "*****",
+        "Login": "login",
+        "Password": "password",
         "Schema": "http",
         "ServerName": "wall-e.ktc.local:8085",
         "PathOnServer": "dt/hs/AppEndpoint/v1"
       }
     ],
     "RabbitMQ": {
-      "HostName": "krolik-01.ktc.local",
-      "UserName": "*****",
-      "Password": "*****",
+      "AmqpUri": "amqp://login:password@host:port/vhost",
+      "InvalidMessageQueue": "1c.foxylink.invalid",
       "MessageQueue": "1c.foxylink",
-      "InvalidMessageQueue": "1c.foxylink.invalid"
+      "NodesCount": 1, 
+      "PrefetchCount": 5
     }
   }
 }
@@ -46,9 +46,10 @@
 
 #### Установка сервиса
 
+Starting with .NET Core 2.0, you don't have to run `dotnet restore` because it's run implicitly by all commands, such as `dotnet build` and `dotnet run`, that require a restore to occur.
+
 ```cmd
 > cd src\FoxyLink.Core
-> dotnet restore
 > dotnet run --register-service
 ...
 Successfully registered and started service "FoxyLink.RabbitMQ Service" ("FoxyLink.RabbitMQ (extract, transform, deliver messages to the «1C:Enterprise 8» consumers)")
