@@ -128,7 +128,7 @@ namespace FoxyLink.RabbitMQ
             }
 
             var props = ea.BasicProperties;
-            if (props.Headers.ContainsKey("x-death"))
+            if (props.Headers?.ContainsKey("x-death") ?? false)
             {
                 attempt = (from list in props.Headers["x-death"] as List<object>
                         from dict in list as Dictionary<string, object>
@@ -157,6 +157,10 @@ namespace FoxyLink.RabbitMQ
         private void MoveToDeadLetterQueue(BasicDeliverEventArgs ea, string message)
         {
             var props = ea.BasicProperties;
+            if (props.Headers == null)
+            {
+                props.Headers = new Dictionary<string, object>();
+            }
             props.Headers.Add("msg-dead-letter", JsonConvert.SerializeObject(
                 new { success = false, log = message }));
 
@@ -166,6 +170,10 @@ namespace FoxyLink.RabbitMQ
         private void MoveToInvalidQueue(BasicDeliverEventArgs ea, string message)
         {
             var props = ea.BasicProperties;
+            if (props.Headers == null)
+            {
+                props.Headers = new Dictionary<string, object>();
+            }
             props.Headers.Add("msg-invalid-error", JsonConvert.SerializeObject(
                 new { success = false, log = message }));
 
@@ -244,6 +252,11 @@ namespace FoxyLink.RabbitMQ
                             MoveToRetryQueue(ea, queue, errorMsg);
                         }
                     }
+                }
+                catch (HttpRequestException ex)
+                {
+                    // HTTP server is down
+                    MoveToRetryQueue(ea, queue, ex.ToString());
                 }
                 catch (WebException ex)
                 {
