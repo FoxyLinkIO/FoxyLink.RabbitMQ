@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -15,6 +16,9 @@ namespace FoxyLink.RabbitMQ
     public class RabbitMQHost : QueueHost
     {
         private readonly RabbitMQHostOptions _options;
+        private const string _invalidQueue = @"foxylink.invalid";
+        private const string _deadLetterQueue = @"foxylink.dead.letter";
+        private const string _deadLetterExchange = @"foxylink.dead.letter";
 
         private bool disposed = false;
         private List<IModel> _channels = new List<IModel>();
@@ -31,133 +35,167 @@ namespace FoxyLink.RabbitMQ
 
             SetUpQueues();
 
-            var factory = new ConnectionFactory()
+            var factory = ConnectionFactory();
+            foreach (var queue in _options.Queues)
+            {
+                for (var i = 0; i < queue.NodesCount; i++)
+                {
+                    var connection = factory.CreateConnection();
+                    _connections.Add(connection);
+
+                    var channel = connection.CreateModel();
+                    _channels.Add(channel);
+
+                    channel.BasicQos(0, queue.PrefetchCount, false);
+                    var consumer = new AsyncEventingBasicConsumer(channel);
+                    consumer.Received += async (o, ea) =>
+                    {
+                        try
+                        {
+                            await SendMessageToEndpoint(ea, queue.Name);
+                        }
+                        catch (Exception ex)
+                        {
+                            MoveToInvalidQueue(ea, ex.ToString());
+                        }
+                        finally
+                        {
+                            channel.BasicAck(deliveryTag: ea.DeliveryTag,
+                                multiple: false);
+                        }
+                    };
+                    channel.BasicConsume(consumer, queue.Name, autoAck: false);
+                }
+            }
+        }
+
+        private ConnectionFactory ConnectionFactory()
+        {
+            return new ConnectionFactory()
             {
                 AutomaticRecoveryEnabled = true,
                 DispatchConsumersAsync = true,
                 TopologyRecoveryEnabled = true,
                 Uri = new Uri(_options.AmqpUri)
             };
-  
-            for (var i = 0; i < _options.NodesCount; i++)
-            {
-                var connection = factory.CreateConnection();
-                _connections.Add(connection);
-
-                var channel = connection.CreateModel();
-                _channels.Add(channel);
-
-                channel.BasicQos(0, _options.PrefetchCount, false);
-                var consumer = new AsyncEventingBasicConsumer(channel);
-                consumer.Received += async (o, ea) =>
-                {
-                    try
-                    {
-                        await SendMessageToEndpoint(ea);
-                    }
-                    catch (Exception ex)
-                    {
-                        MoveToInvalidQueue(ea.BasicProperties, ex.ToString());
-                    }
-                    finally
-                    {
-                        channel.BasicAck(deliveryTag: ea.DeliveryTag,
-                            multiple: false);
-                    }
-                };
-                channel.BasicConsume(consumer, _options.MessageQueue,
-                    autoAck: false);
-            }
         }
 
         private void SetUpQueues()
         {
-            var factory = new ConnectionFactory();
-            factory.Uri = new Uri(_options.AmqpUri);
+            var factory = ConnectionFactory();
             using (var connection = factory.CreateConnection())
+            using (var model = connection.CreateModel())
             {
-                using (var model = connection.CreateModel())
+                model.QueueDeclare(_invalidQueue, true, false, false, null);
+
+                model.ExchangeDeclare(_deadLetterExchange, @"direct", true, false);
+                model.QueueDeclare(_deadLetterQueue, true, false, false, null);
+                model.QueueBind(_deadLetterQueue, _deadLetterExchange, _deadLetterQueue);
+
+                foreach (var queue in _options.Queues)
                 {
-                    model.QueueDeclare(_options.MessageQueue, true, false, false, null);
-                    model.QueueDeclare(_options.InvalidMessageQueue, true, false, false, null);
-                }
-            }
-        }
+                    model.QueueDeclare(queue.Name, true, false, false, 
+                        new Dictionary<string, object>
+                        {
+                            { "x-dead-letter-exchange", _deadLetterExchange },
+                            { "x-dead-letter-routing-key", _deadLetterQueue}
+                        });
 
-        private void MoveToInvalidQueue(IBasicProperties props, string errorMsg)
-        {
-            var error = new { result = "failed", log = errorMsg };
-            var log = JsonConvert.SerializeObject(error);
-            var body = Encoding.UTF8.GetBytes(log);
-
-            var factory = new ConnectionFactory();
-            factory.Uri = new Uri(_options.AmqpUri);
-            using (var connection = factory.CreateConnection())
-            {
-                using (var model = connection.CreateModel())
-                {
-                    var eProps = model.CreateBasicProperties();
-
-                    if (!String.IsNullOrWhiteSpace(props.AppId))
+                    var retries = _options.RetryInMilliseconds;
+                    if (_options.RetryInMilliseconds.Count > 0)
                     {
-                        eProps.AppId = props.AppId;
-                    }
-
-                    if (!String.IsNullOrWhiteSpace(props.ContentEncoding))
-                    {
-                        eProps.ContentEncoding = props.ContentEncoding;
-                    }
-
-                    if (!String.IsNullOrWhiteSpace(props.ContentType))
-                    {
-                        eProps.ContentType = props.ContentType;
-                    }
-
-                    if (!String.IsNullOrWhiteSpace(props.CorrelationId))
-                    {
-                        eProps.CorrelationId = props.CorrelationId;
-                    }
-
-                    eProps.DeliveryMode = props.DeliveryMode;
-
-                    if (!String.IsNullOrWhiteSpace(props.MessageId))
-                    {
-                        eProps.MessageId = props.MessageId;
-                    }
-
-                    //if (!String.IsNullOrWhiteSpace(props.ReplyTo))
-                    //{
-                    //    eProps.ReplyTo = props.ReplyTo;
-                    //}
-
-                    eProps.Timestamp = props.Timestamp;
-
-                    if (!String.IsNullOrWhiteSpace(props.Type))
-                    {
-                        eProps.Type = props.Type;
-                    }
-
-                    if (props.ReplyTo != null)
-                    {
-                        model.BasicPublish(exchange: "",
-                            routingKey: props.ReplyTo,
-                            basicProperties: eProps,
-                            body: body);
-                    }
-                    else
-                    {
-                        model.BasicPublish(exchange: "",
-                            routingKey: _options.InvalidMessageQueue,
-                            basicProperties: props,
-                            body: body);
+                        var retryQueue = $"{queue.Name}.retry";
+                        model.QueueDeclare(retryQueue, true, false, false,
+                            new Dictionary<string, object>
+                            {
+                                { "x-dead-letter-exchange", _deadLetterExchange },
+                                { "x-dead-letter-routing-key", queue.Name}
+                            });
+                        model.QueueBind(queue.Name, _deadLetterExchange, queue.Name);
                     }
                 }
             }
         }
 
-        private async Task SendMessageToEndpoint(BasicDeliverEventArgs eventArgs)
+        private void MoveToRetryQueue(BasicDeliverEventArgs ea, string queue, string message)
         {
-            var props = eventArgs.BasicProperties;
+            var attempt = 1;
+            var retries = _options.RetryInMilliseconds;
+            if (retries.Count == 0)
+            {
+                MoveToDeadLetterQueue(ea, $"The number of retry attempts isn't set. {message}");
+                return;
+            }
+
+            var props = ea.BasicProperties;
+            if (props.Headers.ContainsKey("x-death"))
+            {
+                attempt = (from list in props.Headers["x-death"] as List<object>
+                        from dict in list as Dictionary<string, object>
+                        where dict.Key == "count"
+                        select Convert.ToInt32(dict.Value)).Sum() + 1;
+            }
+
+            if (attempt > retries.Count)
+            {
+                MoveToDeadLetterQueue(ea, $"Message has exceeded the maximum number of retry attempts. {message}");
+                return;
+            }
+
+            var factory = ConnectionFactory();
+            using (var connection = factory.CreateConnection())
+            using (var model = connection.CreateModel())
+            {
+                props.Expiration = retries[attempt-1];
+                model.BasicPublish(exchange: "",
+                    routingKey: $"{queue}.retry",
+                    basicProperties: props,
+                    body: ea.Body);
+            }
+        }
+
+        private void MoveToDeadLetterQueue(BasicDeliverEventArgs ea, string message)
+        {
+            var props = ea.BasicProperties;
+            props.Headers.Add("msg-dead-letter", JsonConvert.SerializeObject(
+                new { success = false, log = message }));
+
+            MoveToServiceQueue(_deadLetterExchange, _deadLetterQueue, props, ea.Body);
+        }
+
+        private void MoveToInvalidQueue(BasicDeliverEventArgs ea, string message)
+        {
+            var props = ea.BasicProperties;
+            props.Headers.Add("msg-invalid-error", JsonConvert.SerializeObject(
+                new { success = false, log = message }));
+
+            MoveToServiceQueue("", _invalidQueue, props, ea.Body);
+        }
+
+        private void MoveToServiceQueue(string exchange, string routingKey, IBasicProperties props, byte[] body)
+        {
+            var factory = ConnectionFactory();
+            using (var connection = factory.CreateConnection())
+            using (var model = connection.CreateModel())
+            {
+                if (props.ReplyTo != null)
+                {
+                    model.BasicPublish(exchange: "",
+                        routingKey: props.ReplyTo,
+                        basicProperties: props,
+                        body: body);
+                }
+
+                model.BasicPublish(exchange: exchange,
+                    routingKey: routingKey,
+                    basicProperties: props,
+                    body: body);
+            }
+        }
+
+        private async Task SendMessageToEndpoint(BasicDeliverEventArgs ea, string queue)
+        {
+            var props = ea.BasicProperties;
             var msgParams = new MessageParameters(props.Type);
             var appEndpoint = AppEndpointHost.Get(msgParams.Name) ??
                 throw new ArgumentNullException("msgParams.Name",
@@ -169,10 +207,12 @@ namespace FoxyLink.RabbitMQ
                 client.Timeout = TimeSpan.FromMinutes(10);
                 client.DefaultRequestHeaders.Authorization = appEndpoint.AuthenticationHeader;
 
-                var contentType = new MediaTypeHeaderValue(props.ContentType);
-                contentType.CharSet = props.ContentEncoding;
+                var contentType = new MediaTypeHeaderValue(props.ContentType)
+                {
+                    CharSet = props.ContentEncoding
+                };
 
-                var content = new ByteArrayContent(eventArgs.Body);
+                var content = new ByteArrayContent(ea.Body);
                 content.Headers.ContentType = contentType;
                 content.Headers.Add("AppId", props.AppId);
                 content.Headers.Add("CorrelationId", props.CorrelationId);
@@ -187,7 +227,8 @@ namespace FoxyLink.RabbitMQ
                 {
                     foreach (var header in props.Headers)
                     {
-                        content.Headers.Add(header.Key, Encoding.UTF8.GetString((byte[])header.Value));
+                        content.Headers.Add(header.Key, header.Value.ToString());
+                        //Encoding.UTF8.GetString((byte[])header.Value));
                     }
                 }
                 
@@ -200,36 +241,31 @@ namespace FoxyLink.RabbitMQ
                         if (!response.IsSuccessStatusCode)
                         {
                             var errorMsg = await response.Content.ReadAsStringAsync();
-                            MoveToInvalidQueue(props, errorMsg);
-                            //TryAgainLater(props.ReplyTo, replyProps, errorMsg);
+                            MoveToRetryQueue(ea, queue, errorMsg);
                         }
                     }
                 }
                 catch (WebException ex)
                 {
                     // handle web exception
-                    //TryAgainLater(props.ReplyTo, replyProps, ex.ToString());
-                    MoveToInvalidQueue(props, ex.ToString());
+                    MoveToRetryQueue(ea, queue, ex.ToString());
                 }
                 catch (TaskCanceledException ex)
                 {
                     if (ex.CancellationToken == cts.Token)
                     {
                         // a real cancellation, triggered by the caller
-                        //TryAgainLater(props.ReplyTo, replyProps, ex.ToString());
-                        MoveToInvalidQueue(props, ex.ToString());
+                        MoveToDeadLetterQueue(ea, ex.ToString());
                     }
                     else
                     {
                         // a web request timeout (possibly other things!?)
-                        //TryAgainLater(props.ReplyTo, replyProps, ex.ToString());
-                        MoveToInvalidQueue(props, ex.ToString());
+                        MoveToRetryQueue(ea, queue, ex.ToString());
                     }
                 }
                 catch (Exception ex)
                 {
-                    //TryAgainLater(props.ReplyTo, replyProps, ex.ToString());
-                    MoveToInvalidQueue(props, ex.ToString());
+                    MoveToInvalidQueue(ea, ex.ToString());
                 }
             }
         }

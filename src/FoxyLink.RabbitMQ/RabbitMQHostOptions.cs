@@ -7,9 +7,14 @@ namespace FoxyLink.RabbitMQ
     public class RabbitMQHostOptions
     {
         public string AmqpUri { get; set; }
-        public string MessageQueue { get; set; }
-        public string InvalidMessageQueue { get; set; }
-        public Int32 NodesCount { get; set; }
-        public UInt16 PrefetchCount { get; set; }
+        public List<Queue> Queues { get; set; } = new List<Queue>();
+        public List<string> RetryInMilliseconds { get; set; } = new List<string>();
+
+        public class Queue
+        {
+            public string Name { get; set; }
+            public int NodesCount { get; set; }
+            public UInt16 PrefetchCount { get; set; }
+        }
     }
 }

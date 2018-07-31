@@ -9,10 +9,7 @@ namespace FoxyLink
         public static void ConfigureAppEndpoints(
             [NotNull] this IGlobalConfiguration configuration)
         {
-            if (configuration == null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
+            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
 
             var config = Configuration.Current;
             var sections = config.GetSection("AccessData:AppEndpoints");
