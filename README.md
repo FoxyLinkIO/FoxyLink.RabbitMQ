@@ -32,6 +32,14 @@
         "Schema": "http",
         "ServerName": "wall-e.ktc.local:8085",
         "PathOnServer": "dt/hs/AppEndpoint/v1"
+      },
+      {
+        "Name": "corezoid",
+        "Login": "",
+        "Password": "",
+        "Schema": "https",
+        "ServerName": "new.corezoid.com",
+        "PathOnServer": "api/1/json"  
       }
     ],
     "RabbitMQ": {
@@ -94,13 +102,21 @@ Successfully unregistered service "FoxyLink.RabbitMQ Service" ("FoxyLink.RabbitM
 ### Минимальный набор полей сообщения для доставки в «1С:Предприятие 8»
 Для успешной доставки сообщения из очередей у каждого сообщения должно быть заполнено:
 * `content_type` — тип содержимого, например: `application/json`, `text/html` и другие; 
-* `type` — должен состоять из четырех частей, например `erp.bunny.send.sync`.  
+* `type` ([FoxyLink](https://github.com/FoxyLinkIO/FoxyLink)) — должен состоять из четырех частей, например `erp.bunny.send.sync`.  
   * часть `erp` — должна соответствовать одному из заданых имен (поле `Name`) в файле `appsettings.json` в разделе `AppEndpoints`. Если соответствие найдено сообщение будет отправлено на указанный адрес HTTP-сервиса, в противном случае сообщение будет сброшено в очередь `foxylink.invalid`;  
-  * `bunny` — предназначено для подсистемы [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) и описывает имя настроек обмена (Catalog.FL_Exchanges);  
+  * `bunny` — предназначено для подсистемы [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) и описывает имя настроек обмена (Catalog.FL_Exchanges).  
   * `send` — идентифицирует операцию связанную с сообщением (Catalog.FL_Operations);
-  * `sync`/`async` — указывает для подсистемы [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) как следует выполнить операцию: синхронно или ассинхронно соответственно.  
+  * `sync` или `async` — указывает для подсистемы [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) как следует выполнить операцию: синхронно или ассинхронно соответственно. 
+  
+  Нет обязательной необходимости устанавливать подсистему [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) в «1С:Предприятие 8», вы можете самостоятельно обрабатывать сообщения на стороне базы данных, но для корректной работы сервиса данные два поля (`content_type` и `type`) должны всегда быть заполнены.
+  
+* `type` ([Corezoid](https://new.corezoid.com)) — должен состоять из четырех частей, например `corezoid.public.452145.17858a4a7a1c42339a40e05f4f989e79fcd7fb63`.
+  * часть `corezoid` — должна соответствовать одному из заданых имен (поле `Name`) в файле `appsettings.json` в разделе `AppEndpoints`. Если соответствие найдено сообщение будет отправлено на указанный адрес HTTPS-сервиса, в противном случае сообщение будет сброшено в очередь `foxylink.invalid`; 
+  * `public` — предназначено для облачной ОС [Corezoid](https://new.corezoid.com), поле статичное и не изменяется; 
+  * `452145` — идентифицирует номер процесса облачной ОС [Corezoid](https://new.corezoid.com);
+  * `17858a4a7a1c42339a40e05f4f989e79fcd7fb63` — 40-символьный идентификатор процеса [Corezoid](https://new.corezoid.com), после успешного выполнения будет начат новый процесс (например, `452145`) в системе [Corezoid](https://new.corezoid.com) и данные тела сообщения будут помещены в этот процесс.
 
-Нет обязательной необходимости устанавливать подсистему [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) в «1С:Предприятие 8», вы можете самостоятельно обрабатывать сообщения на стороне базы данных, но для корректной работы сервиса данные два поля (`content_type` и `type`) должны всегда быть заполнены.
+
 
 # Ошибки и пожелания
 
