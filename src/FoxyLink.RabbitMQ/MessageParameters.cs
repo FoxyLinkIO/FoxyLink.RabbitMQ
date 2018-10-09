@@ -29,9 +29,9 @@ namespace FoxyLink.RabbitMQ
             Operation = result[2];
             Type = result[3];
 
-            if (Type.ToUpper() != "ASYNC" && Type.ToUpper() != "SYNC")
+            if (Type.ToUpper() != "ASYNC" && Type.ToUpper() != "SYNC" && Type.Length != 40)
             {
-                throw new ArgumentException("Properties.Type", $"Failed to process parameter {type}. Expected type is {{async or sync}} and received type is {Type}.");
+                throw new ArgumentException("Properties.Type", $"Failed to process parameter {type}. Expected type is {{async\\sync or Corezoid identifier}} and received type is {Type}.");
             }
         }
     }
