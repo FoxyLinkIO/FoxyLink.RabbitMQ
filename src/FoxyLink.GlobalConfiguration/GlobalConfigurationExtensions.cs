@@ -5,17 +5,6 @@ namespace FoxyLink
 {
     public static class GlobalConfigurationExtensions
     {
-        public static IGlobalConfiguration<TConfiguration> UseConfiguration<TConfiguration>(
-            [NotNull] this IGlobalConfiguration configuration,
-            [NotNull] TConfiguration config)
-            where TConfiguration : IConfigurationRoot
-        {
-            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
-            if (config == null) throw new ArgumentNullException(nameof(config));
-
-            return configuration.Use(config, x => Configuration.Current = x);
-        }
-
         public static IGlobalConfiguration<TQueueHost> UseQueueHost<TQueueHost>(
             [NotNull] this IGlobalConfiguration configuration,
             [NotNull] TQueueHost host)

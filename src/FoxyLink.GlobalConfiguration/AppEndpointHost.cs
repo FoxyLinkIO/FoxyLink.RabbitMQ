@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace FoxyLink
 {
@@ -15,7 +14,7 @@ namespace FoxyLink
             {
                 if (_current == null)
                 {
-                    throw new InvalidOperationException("AppEndpointHost.Current property value has not been initialized. You must set it before using AppEndpointHost.");
+                    throw new InvalidOperationException(@"AppEndpointHost.Current property value has not been initialized. You must set it before using AppEndpointHost.");
                 }
 
                 return _current.GetValueOrDefault(key.ToUpper());
@@ -28,7 +27,7 @@ namespace FoxyLink
             {
                 if (_current == null)
                 {
-                    throw new InvalidOperationException("AppEndpointHost.Current property value has not been initialized. You must set it before using AppEndpointHost.");
+                    throw new InvalidOperationException(@"AppEndpointHost.Current property value has not been initialized. You must set it before using AppEndpointHost.");
                 }
 
                 _current.Add(key.ToUpper(), appEndpoint);

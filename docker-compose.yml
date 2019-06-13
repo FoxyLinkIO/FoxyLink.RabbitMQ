@@ -1,0 +1,7 @@
+version: '2'
+
+services:
+  foxylink-core:
+    restart: always
+    image: fl-core
+    command: --docker

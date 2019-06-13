@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FoxyLink
+﻿namespace FoxyLink
 {
     public class AppEndpointOptions
     {

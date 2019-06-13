@@ -40,7 +40,7 @@ namespace FoxyLink.RabbitMQ
             {
                 for (var i = 0; i < queue.NodesCount; i++)
                 {
-                    var connection = factory.CreateConnection();
+                    var connection = factory.CreateConnection(@"FoxyLink client");
                     _connections.Add(connection);
 
                     var channel = connection.CreateModel();
@@ -94,7 +94,7 @@ namespace FoxyLink.RabbitMQ
 
                 foreach (var queue in _options.Queues)
                 {
-                    model.QueueDeclare(queue.Name, true, false, false, 
+                    model.QueueDeclare(queue.Name, true, false, false,
                         new Dictionary<string, object>
                         {
                             { "x-dead-letter-exchange", _deadLetterExchange },
@@ -131,9 +131,9 @@ namespace FoxyLink.RabbitMQ
             if (props.Headers?.ContainsKey("x-death") ?? false)
             {
                 attempt = (from list in props.Headers["x-death"] as List<object>
-                        from dict in list as Dictionary<string, object>
-                        where dict.Key == "count"
-                        select Convert.ToInt32(dict.Value)).Sum() + 1;
+                           from dict in list as Dictionary<string, object>
+                           where dict.Key == "count"
+                           select Convert.ToInt32(dict.Value)).Sum() + 1;
             }
 
             if (attempt > retries.Count)
@@ -146,7 +146,7 @@ namespace FoxyLink.RabbitMQ
             using (var connection = factory.CreateConnection())
             using (var model = connection.CreateModel())
             {
-                props.Expiration = retries[attempt-1];
+                props.Expiration = retries[attempt - 1];
                 model.BasicPublish(exchange: "",
                     routingKey: $"{queue}.retry",
                     basicProperties: props,
@@ -230,7 +230,7 @@ namespace FoxyLink.RabbitMQ
                 {
                     content.Headers.Add("Timestamp", props.Timestamp.UnixTime.ToString());
                 }
-                
+
                 if (props.Headers != null)
                 {
                     foreach (var header in props.Headers)
@@ -239,7 +239,7 @@ namespace FoxyLink.RabbitMQ
                         //Encoding.UTF8.GetString((byte[])header.Value));
                     }
                 }
-                
+
                 var cts = new CancellationTokenSource();
                 try
                 {

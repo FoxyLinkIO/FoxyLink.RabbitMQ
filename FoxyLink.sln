@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29006.145
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxyLink.Core", "src\FoxyLink.Core\FoxyLink.Core.csproj", "{A6C188E2-83CF-4F7A-A4E5-18D0FF4BA88E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxyLink.Core", "src\FoxyLink.Core\FoxyLink.Core.csproj", "{FBECA9D3-6BFC-42C4-A4BD-E3F0DF5DEDEB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3A2CE073-118C-442F-9170-F90E920C9D71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxyLink.GlobalConfiguration", "src\FoxyLink.GlobalConfiguration\FoxyLink.GlobalConfiguration.csproj", "{6BF698E0-3468-49FF-AAC6-D652EC1DE7D2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxyLink.GlobalConfiguration", "src\FoxyLink.GlobalConfiguration\FoxyLink.GlobalConfiguration.csproj", "{5CEC12AD-61C3-46C4-9759-76892C3F7A8A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxyLink.RabbitMQ", "src\FoxyLink.RabbitMQ\FoxyLink.RabbitMQ.csproj", "{B19181A4-D9DD-43E9-BC38-066DEC05BA67}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxyLink.RabbitMQ", "src\FoxyLink.RabbitMQ\FoxyLink.RabbitMQ.csproj", "{E119130D-9D48-463D-A294-FBEEC3058BBB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,28 +15,23 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A6C188E2-83CF-4F7A-A4E5-18D0FF4BA88E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A6C188E2-83CF-4F7A-A4E5-18D0FF4BA88E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A6C188E2-83CF-4F7A-A4E5-18D0FF4BA88E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A6C188E2-83CF-4F7A-A4E5-18D0FF4BA88E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5CEC12AD-61C3-46C4-9759-76892C3F7A8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5CEC12AD-61C3-46C4-9759-76892C3F7A8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5CEC12AD-61C3-46C4-9759-76892C3F7A8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5CEC12AD-61C3-46C4-9759-76892C3F7A8A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B19181A4-D9DD-43E9-BC38-066DEC05BA67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B19181A4-D9DD-43E9-BC38-066DEC05BA67}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B19181A4-D9DD-43E9-BC38-066DEC05BA67}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B19181A4-D9DD-43E9-BC38-066DEC05BA67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBECA9D3-6BFC-42C4-A4BD-E3F0DF5DEDEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBECA9D3-6BFC-42C4-A4BD-E3F0DF5DEDEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBECA9D3-6BFC-42C4-A4BD-E3F0DF5DEDEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBECA9D3-6BFC-42C4-A4BD-E3F0DF5DEDEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BF698E0-3468-49FF-AAC6-D652EC1DE7D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BF698E0-3468-49FF-AAC6-D652EC1DE7D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BF698E0-3468-49FF-AAC6-D652EC1DE7D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BF698E0-3468-49FF-AAC6-D652EC1DE7D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E119130D-9D48-463D-A294-FBEEC3058BBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E119130D-9D48-463D-A294-FBEEC3058BBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E119130D-9D48-463D-A294-FBEEC3058BBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E119130D-9D48-463D-A294-FBEEC3058BBB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{A6C188E2-83CF-4F7A-A4E5-18D0FF4BA88E} = {3A2CE073-118C-442F-9170-F90E920C9D71}
-		{5CEC12AD-61C3-46C4-9759-76892C3F7A8A} = {3A2CE073-118C-442F-9170-F90E920C9D71}
-		{B19181A4-D9DD-43E9-BC38-066DEC05BA67} = {3A2CE073-118C-442F-9170-F90E920C9D71}
-	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {38618320-2F11-4821-A115-85754696E8A0}
+		SolutionGuid = {927357E3-272D-4262-8289-B458424A5CF3}
 	EndGlobalSection
 EndGlobal

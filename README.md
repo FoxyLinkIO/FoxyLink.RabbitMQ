@@ -1,13 +1,11 @@
-# Windows сервис для подключения к кластеру RabbitMQ и оповещения подсистемы «FoxyLink» об событиях 
+# Cервис для подключения к кластеру RabbitMQ и оповещения подсистемы «FoxyLink» об событиях 
 
-### Минимальные требования:
-* .NET Core SDK 2.0.3 и выше (инсрумент для работы с `.csproj`)
-* система Windows
-* настройте данные доступа к кластеру **RabbitMQ** и **HTTP сервисам** «1С: Предприятие 8»
-(src\FoxyLink.GlobalConfiguration\appsettings.json)
-* **Привилегированная командная строка**: запустите консоль как администратор.
+## Минимальные требования:
+* Настройте данные доступа к кластеру **RabbitMQ** и **HTTP сервисам** «1С: Предприятие 8»
+(src\FoxyLink.Core\appsettings.json)
 
-### Описание файла настроек `appsettings.json`
+
+## Описание файла настроек `appsettings.json`
 ```json
 {
   "HostData": {
@@ -77,29 +75,33 @@
 • `PrefetchCount` — количество сообщений доставляемых потребителю(обработчику) при событии Ack;  
 `RetryInMilliseconds` — количество повторных попыток (равна количеству элементов в массиве) и время через которое будет выполнена повторная попытка в миллисекундах; Если значение задано будут созданы очереди `Name.retry`.     
 
-### Установка сервиса
-Starting with .NET Core 2.0, you don't have to run `dotnet restore` because it's run implicitly by all commands, such as `dotnet build` and `dotnet run`, that require a restore to occur.
+## Установка как Windows сервис
+Starting with .NET Core 3.0, you don't have to run `dotnet restore` because it's run implicitly by all commands, such as `dotnet build` and `dotnet run`, that require a restore to occur.
 
 ```cmd
-> cd src\FoxyLink.Core
-> dotnet run -c Release --register-service
-...
-Successfully registered and started service "FoxyLink.RabbitMQ Service" ("FoxyLink.RabbitMQ (extract, transform, deliver messages to the «1C:Enterprise 8» consumers)")
+> dotnet publish -c Release
+> sc create FoxyLink.RabbitMQ binPath="<ReleasePath>\FoxyLink.Core.exe" displayname= "FoxyLink.RabbitMQ (extract, transform, deliver messages to the «1C:Enterprise 8» consumers)"
+> sc start FoxyLink.RabbitMQ
 ```
 
 После успешной установки и запуска сервиса в кластере RabbitMQ должен появится новый потребитель сообщений.
 
-### Удаление сервиса
+#### Удаление сервиса
 
 ```cmd
-> dotnet run --unregister-service
-...
-Successfully unregistered service "FoxyLink.RabbitMQ Service" ("FoxyLink.RabbitMQ (extract, transform, deliver messages to the «1C:Enterprise 8» consumers)")
+> sc stop FoxyLink.RabbitMQ
+> sc delete FoxyLink.RabbitMQ
 ```
 Обратите внимание, что служба может отображаться как `disabled` в течение некоторого времени, пока все инструменты, обращающиеся к API сервисам windows, не будут закрыты.
 Просмотрите этот [Stackoverflow вопрос](http://stackoverflow.com/questions/20561990/how-to-solve-the-specified-service-has-been-marked-for-deletion-error).
 
-### Минимальный набор полей сообщения для доставки в «1С:Предприятие 8»
+## Запуск в Docker контейнере
+```cmd
+> docker build -t fl-core .
+> docker-compose up -d
+```
+
+## Минимальный набор полей сообщения для доставки в «1С:Предприятие 8»
 Для успешной доставки сообщения из очередей у каждого сообщения должно быть заполнено:
 * `content_type` — тип содержимого, например: `application/json`, `text/html` и другие; 
 * `type` ([FoxyLink](https://github.com/FoxyLinkIO/FoxyLink)) — должен состоять из четырех частей, например `erp.bunny.send.sync`.  

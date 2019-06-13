@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -7,11 +8,11 @@ namespace FoxyLink
     public static class AppEndpointHostExtensions
     {
         public static void ConfigureAppEndpoints(
-            [NotNull] this IGlobalConfiguration configuration)
+            [NotNull] this IGlobalConfiguration configuration,
+            IConfiguration config)
         {
             if (configuration == null) throw new ArgumentNullException(nameof(configuration));
 
-            var config = Configuration.Current;
             var sections = config.GetSection("AccessData:AppEndpoints");
             foreach (var section in sections.GetChildren())
             {
