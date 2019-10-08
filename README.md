@@ -39,14 +39,14 @@
         "ServerName": "new.corezoid.com",
         "PathOnServer": "api/1/json"  
       },
-	  {
-	    "Name": "bpmn",
+      {
+        "Name": "bpmn",
         "Login": "login",
         "Password": "password",
         "Schema": "http",
         "ServerName": "bpmn.ktc.local:8080",
         "PathOnServer": "engine-rest/message"
-	  }
+      }
     ],
     "RabbitMQ": {
       "AmqpUri": "amqp://login:password@host:port/vhost",
