@@ -1,7 +1,7 @@
 # Cервис для подключения к кластеру RabbitMQ и оповещения подсистемы «FoxyLink» об событиях 
 
 ## Минимальные требования:
-* Настройте данные доступа к кластеру **RabbitMQ** и **HTTP сервисам** «1С: Предприятие 8»
+* Настройте данные доступа к кластеру **RabbitMQ** и **HTTP сервисам** «1С: Предприятие 8», Corezoid и Camunda BPM
 (src\FoxyLink.Core\appsettings.json)
 
 
@@ -38,7 +38,15 @@
         "Schema": "https",
         "ServerName": "new.corezoid.com",
         "PathOnServer": "api/1/json"  
-      }
+      },
+	  {
+	    "Name": "bpmn",
+        "Login": "login",
+        "Password": "password",
+        "Schema": "http",
+        "ServerName": "bpmn.ktc.local:8080",
+        "PathOnServer": "engine-rest/message"
+	  }
     ],
     "RabbitMQ": {
       "AmqpUri": "amqp://login:password@host:port/vhost",
@@ -52,6 +60,11 @@
           "Name": "1c.foxylink",
           "NodesCount": 2,
           "PrefetchCount": 2
+        },
+        {
+          "Name": "bpmn.order-cycle",
+          "NodesCount": 3,
+          "PrefetchCount": 1
         }
       ],
       "RetryInMilliseconds": [ "30000", "60000", "300000", "900000", "1800000", "3600000", "7200000", "14400000" ]
@@ -111,14 +124,18 @@ Starting with .NET Core 3.0, you don't have to run `dotnet restore` because it's
   * `sync` или `async` — указывает для подсистемы [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) как следует выполнить операцию: синхронно или ассинхронно соответственно. 
   
   Нет обязательной необходимости устанавливать подсистему [FoxyLink](https://github.com/FoxyLinkIO/FoxyLink) в «1С:Предприятие 8», вы можете самостоятельно обрабатывать сообщения на стороне базы данных, но для корректной работы сервиса данные два поля (`content_type` и `type`) должны всегда быть заполнены.
-  
+
+## Минимальный набор полей сообщения для доставки в «Corezoid»  
 * `type` ([Corezoid](https://new.corezoid.com)) — должен состоять из четырех частей, например `corezoid.public.452145.17858a4a7a1c42339a40e05f4f989e79fcd7fb63`.
   * часть `corezoid` — должна соответствовать одному из заданых имен (поле `Name`) в файле `appsettings.json` в разделе `AppEndpoints`. Если соответствие найдено сообщение будет отправлено на указанный адрес HTTPS-сервиса, в противном случае сообщение будет сброшено в очередь `foxylink.invalid`; 
   * `public` — предназначено для облачной ОС [Corezoid](https://new.corezoid.com), поле статичное и не изменяется; 
   * `452145` — идентифицирует номер процесса облачной ОС [Corezoid](https://new.corezoid.com);
   * `17858a4a7a1c42339a40e05f4f989e79fcd7fb63` — 40-символьный идентификатор процеса [Corezoid](https://new.corezoid.com), после успешного выполнения будет начат новый процесс (например, `452145`) в системе [Corezoid](https://new.corezoid.com) и данные тела сообщения будут помещены в этот процесс.
 
-
+## Минимальный набор полей сообщения для доставки в «Camunda BPM»  
+* `content_type` — `application/json`;
+* `type` ([Camunda BPM](https://camunda.com/)) — должен состоять из одной части, например `bpmn`.
+  * часть `bpmn` — должна соответствовать одному из заданых имен (поле `Name`) в файле `appsettings.json` в разделе `AppEndpoints`. Если соответствие найдено сообщение будет отправлено на указанный адрес HTTPS-сервиса, в противном случае сообщение будет сброшено в очередь `foxylink.invalid`; 
 
 # Ошибки и пожелания
 

@@ -9,6 +9,8 @@ namespace FoxyLink.RabbitMQ
         public string Operation { get; set; }
         public string Type { get; set; }
 
+        public bool BPMNEngine { get; set; } = false;
+
         public MessageParameters(string type)
         {
             if (type == null)
@@ -17,19 +19,26 @@ namespace FoxyLink.RabbitMQ
             }
 
             var result = type.Split(".");
-            if (result.Length != 4)
+            if (result.Length != 1 && result.Length != 4)
             {
-                throw new ArgumentOutOfRangeException("Properties.Type", $"Failed to process parameter {type}. Expected number of type parts is {{4}} and received number is {result.Length}.");
+                throw new ArgumentOutOfRangeException("Properties.Type", $"Failed to process parameter {type}. Expected number of type parts is {{1}} for BPMN engine, {{4}} for 1C:Enterprise or Corezoid and received number is {result.Length}.");
             }
 
             Name = result[0];
-            Exchange = result[1];
-            Operation = result[2];
-            Type = result[3];
-
-            if (Type.ToUpper() != "ASYNC" && Type.ToUpper() != "SYNC" && Type.Length != 40)
+            if (result.Length == 4)
             {
-                throw new ArgumentException("Properties.Type", $"Failed to process parameter {type}. Expected type is {{async\\sync or Corezoid identifier}} and received type is {Type}.");
+                Exchange = result[1];
+                Operation = result[2];
+                Type = result[3];
+
+                if (Type.ToUpper() != "ASYNC" && Type.ToUpper() != "SYNC" && Type.Length != 40)
+                {
+                    throw new ArgumentException("Properties.Type", $"Failed to process parameter {type}. Expected type is {{async\\sync or Corezoid identifier}} and received type is {Type}.");
+                }
+            }
+            else
+            {
+                BPMNEngine = true;
             }
         }
     }

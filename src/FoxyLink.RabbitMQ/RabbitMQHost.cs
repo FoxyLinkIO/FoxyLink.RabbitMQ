@@ -209,7 +209,11 @@ namespace FoxyLink.RabbitMQ
                 throw new ArgumentNullException("msgParams.Name",
                     $"Application endpoint {msgParams.Name} not found.");
 
-            var RequestUri = $"{appEndpoint.StringURI}/{msgParams.Exchange}/{msgParams.Operation}/{msgParams.Type}";
+            var RequestUri = appEndpoint.StringURI;
+            if (!msgParams.BPMNEngine)
+            { 
+                RequestUri = $"{RequestUri}/{msgParams.Exchange}/{msgParams.Operation}/{msgParams.Type}";
+            }
             using (HttpClient client = new HttpClient())
             {
                 client.Timeout = TimeSpan.FromMinutes(10);
