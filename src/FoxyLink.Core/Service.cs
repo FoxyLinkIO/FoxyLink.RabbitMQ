@@ -1,39 +1,50 @@
 ﻿using System;
-using DasMulli.Win32.ServiceUtils;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
 using FoxyLink.RabbitMQ;
 
 namespace FoxyLink
 {
-    public class Service : IWin32Service, IDisposable
+    public class Service : IHostedService, IDisposable
     {
         private bool _disposed = false;
-        private readonly string[] _commandLineArguments;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _config;
+
         public string ServiceName { get; }
 
-        public Service(string[] commandLineArguments)
+        public Service(ILogger<Service> logger, IConfiguration config)
         {
-            _commandLineArguments = commandLineArguments;
-            ServiceName = Configuration.Current["HostData:ServiceName"];
+            _logger = logger;
+            _config = config;
+
+            ServiceName = config["HostData:ServiceName"];
         }
 
-        public void Start(string[] startupArguments, ServiceStoppedCallback serviceStoppedCallback)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            GlobalConfiguration.Configuration.ConfigureAppEndpoints();
-            GlobalConfiguration.Configuration.UseRabbitMQHost();
+            _logger.LogInformation("Starting service: " + ServiceName);
+
+            GlobalConfiguration.Configuration.ConfigureAppEndpoints(_config);
+            GlobalConfiguration.Configuration.UseRabbitMQHost(_config);
+
+            return Task.CompletedTask;
         }
 
-        public void Stop()
+        public Task StopAsync(CancellationToken cancellationToken)
         {
+            _logger.LogInformation("Stopping service.");
             QueueHost.Current.Close();
-        }
-
-        ~Service()
-        {
-            Dispose(false);
+            return Task.CompletedTask;
         }
 
         public void Dispose()
         {
+            _logger.LogInformation("Disposing....");
             Dispose(true);
             GC.SuppressFinalize(this);
         }

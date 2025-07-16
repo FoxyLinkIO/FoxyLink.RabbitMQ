@@ -15,6 +15,11 @@ namespace FoxyLink.RabbitMQ;
 public class RabbitMQHost : QueueHost
 {
     private readonly RabbitMQHostOptions _options;
+
+    private const string _classicQueue = "classic";
+    private const string _queueType = "x-queue-type";
+    private const string _quorumQueue = "quorum";
+
     private const string _invalidQueue = @"foxylink.invalid";
     private const string _deadLetterQueue = @"foxylink.dead.letter";
     private const string _deadLetterExchange = @"foxylink.dead.letter";
@@ -101,7 +106,8 @@ public class RabbitMQHost : QueueHost
                 new Dictionary<string, object>
                 {
                     { "x-dead-letter-exchange", _deadLetterExchange },
-                    { "x-dead-letter-routing-key", _deadLetterQueue}
+                    { "x-dead-letter-routing-key", _deadLetterQueue },
+                    { _queueType, queue.QuorumQueue ? _quorumQueue : _classicQueue }
                 });
 
             if (_options.RetryInMilliseconds.Count > 0)
@@ -111,7 +117,8 @@ public class RabbitMQHost : QueueHost
                     new Dictionary<string, object>
                     {
                         { "x-dead-letter-exchange", "" },
-                        { "x-dead-letter-routing-key", queue.Name}
+                        { "x-dead-letter-routing-key", queue.Name },
+                        { _queueType, queue.QuorumQueue ? _quorumQueue : _classicQueue }
                     });
                 await channel.QueueBindAsync(queue.Name, _deadLetterExchange, queue.Name);
             }
@@ -130,8 +137,10 @@ public class RabbitMQHost : QueueHost
 
         if (ea.BasicProperties.Headers?.ContainsKey("RetryAttempts") ?? false)
         {
-            int.TryParse(ea.BasicProperties.Headers["RetryAttempts"].ToString(), out attempt);
-            attempt++;
+            if (int.TryParse(ea.BasicProperties.Headers["RetryAttempts"].ToString(), out attempt))
+            {
+                attempt++;
+            }
         }
 
         if (attempt > retries.Count)

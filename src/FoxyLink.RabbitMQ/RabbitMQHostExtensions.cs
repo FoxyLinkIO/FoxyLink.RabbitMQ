@@ -1,15 +1,15 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 
 namespace FoxyLink.RabbitMQ;
 
 public static class RabbitMQHostExtensions
 {
     public static IGlobalConfiguration<RabbitMQHost> UseRabbitMQHost(
-        [NotNull] this IGlobalConfiguration configuration)
+        [NotNull] this IGlobalConfiguration configuration, IConfiguration config)
     {
-        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
 
-        var config = Configuration.Current;
         var options = new RabbitMQHostOptions()
         {
             AmqpUri = config["AccessData:RabbitMQ:AmqpUri"]

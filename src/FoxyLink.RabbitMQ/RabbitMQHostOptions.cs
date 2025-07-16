@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace FoxyLink.RabbitMQ
+namespace FoxyLink.RabbitMQ;
+
+public class RabbitMQHostOptions
 {
-    public class RabbitMQHostOptions
-    {
-        public string AmqpUri { get; set; }
-        public List<Queue> Queues { get; set; } = new List<Queue>();
-        public List<string> RetryInMilliseconds { get; set; } = new List<string>();
+    public string AmqpUri { get; set; }
+    public List<Queue> Queues { get; set; } = new List<Queue>();
+    public List<string> RetryInMilliseconds { get; set; } = new List<string>();
 
-        public class Queue
-        {
-            public string Name { get; set; }
-            public int NodesCount { get; set; }
-            public UInt16 PrefetchCount { get; set; }
-        }
+    public class Queue
+    {
+        public string Name { get; set; }
+        public int NodesCount { get; set; }
+        public UInt16 PrefetchCount { get; set; }
+        public bool QuorumQueue { get; set; }
     }
 }
