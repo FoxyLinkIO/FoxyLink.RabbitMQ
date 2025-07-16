@@ -32,9 +32,9 @@ namespace FoxyLink.RabbitMQ
 
                 options.Queues.Add(new RabbitMQHostOptions.Queue()
                 {
-                        Name = config[$"{section.Path}:Name"],
-                        NodesCount = nodes,
-                        PrefetchCount = prefetch
+                    Name = config[$"{section.Path}:Name"],
+                    NodesCount = nodes,
+                    PrefetchCount = prefetch
                 });
             }
 
@@ -55,6 +55,7 @@ namespace FoxyLink.RabbitMQ
             if (options == null) throw new ArgumentNullException(nameof(options));
 
             var queueHost = new RabbitMQHost(options);
+            queueHost.CreateConnectionAsync().Wait();
             return configuration.UseQueueHost(queueHost);
         }
     }
