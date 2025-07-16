@@ -28,11 +28,17 @@ public static class RabbitMQHostExtensions
                 prefetch = 1;
             }
 
+            if (!bool.TryParse(config[$"{section.Path}:QuorumQueue"], out var queueType))
+            {
+                queueType = false;
+            }
+
             options.Queues.Add(new RabbitMQHostOptions.Queue()
             {
                 Name = config[$"{section.Path}:Name"],
                 NodesCount = nodes,
-                PrefetchCount = prefetch
+                PrefetchCount = prefetch,
+                QuorumQueue = queueType
             });
         }
 
@@ -49,8 +55,8 @@ public static class RabbitMQHostExtensions
         [NotNull] this IGlobalConfiguration configuration,
         [NotNull] RabbitMQHostOptions options)
     {
-        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
-        if (options == null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(options, nameof(options));
 
         var queueHost = new RabbitMQHost(options);
         queueHost.CreateConnectionAsync().Wait();
