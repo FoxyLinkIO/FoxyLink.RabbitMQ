@@ -1,62 +1,59 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace FoxyLink.RabbitMQ
+namespace FoxyLink.RabbitMQ;
+
+public static class RabbitMQHostExtensions
 {
-    public static class RabbitMQHostExtensions
+    public static IGlobalConfiguration<RabbitMQHost> UseRabbitMQHost(
+        [NotNull] this IGlobalConfiguration configuration)
     {
-        public static IGlobalConfiguration<RabbitMQHost> UseRabbitMQHost(
-            [NotNull] this IGlobalConfiguration configuration)
+        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+
+        var config = Configuration.Current;
+        var options = new RabbitMQHostOptions()
         {
-            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+            AmqpUri = config["AccessData:RabbitMQ:AmqpUri"]
+        };
 
-            var config = Configuration.Current;
-            var options = new RabbitMQHostOptions()
+        var sections = config.GetSection("AccessData:RabbitMQ:Queues");
+        foreach (var section in sections.GetChildren())
+        {
+            if (!Int32.TryParse(config[$"{section.Path}:NodesCount"], out var nodes))
             {
-                AmqpUri = config["AccessData:RabbitMQ:AmqpUri"]
-            };
-
-            var sections = config.GetSection("AccessData:RabbitMQ:Queues");
-            foreach (var section in sections.GetChildren())
-            {
-                if (!Int32.TryParse(config[$"{section.Path}:NodesCount"], out var nodes))
-                {
-                    nodes = 1;
-                }
-
-                if (!UInt16.TryParse(config[$"{section.Path}:PrefetchCount"], out var prefetch))
-                {
-                    prefetch = 1;
-                }
-
-                options.Queues.Add(new RabbitMQHostOptions.Queue()
-                {
-                    Name = config[$"{section.Path}:Name"],
-                    NodesCount = nodes,
-                    PrefetchCount = prefetch
-                });
+                nodes = 1;
             }
 
-            sections = config.GetSection("AccessData:RabbitMQ:RetryInMilliseconds");
-            foreach (var section in sections.GetChildren())
+            if (!UInt16.TryParse(config[$"{section.Path}:PrefetchCount"], out var prefetch))
             {
-                options.RetryInMilliseconds.Add(section.Value);
+                prefetch = 1;
             }
 
-            return configuration.UseRabbitMQHost(options);
+            options.Queues.Add(new RabbitMQHostOptions.Queue()
+            {
+                Name = config[$"{section.Path}:Name"],
+                NodesCount = nodes,
+                PrefetchCount = prefetch
+            });
         }
 
-        public static IGlobalConfiguration<RabbitMQHost> UseRabbitMQHost(
-            [NotNull] this IGlobalConfiguration configuration,
-            [NotNull] RabbitMQHostOptions options)
+        sections = config.GetSection("AccessData:RabbitMQ:RetryInMilliseconds");
+        foreach (var section in sections.GetChildren())
         {
-            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
-            if (options == null) throw new ArgumentNullException(nameof(options));
-
-            var queueHost = new RabbitMQHost(options);
-            queueHost.CreateConnectionAsync().Wait();
-            return configuration.UseQueueHost(queueHost);
+            options.RetryInMilliseconds.Add(section.Value);
         }
+
+        return configuration.UseRabbitMQHost(options);
+    }
+
+    public static IGlobalConfiguration<RabbitMQHost> UseRabbitMQHost(
+        [NotNull] this IGlobalConfiguration configuration,
+        [NotNull] RabbitMQHostOptions options)
+    {
+        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+        if (options == null) throw new ArgumentNullException(nameof(options));
+
+        var queueHost = new RabbitMQHost(options);
+        queueHost.CreateConnectionAsync().Wait();
+        return configuration.UseQueueHost(queueHost);
     }
 }

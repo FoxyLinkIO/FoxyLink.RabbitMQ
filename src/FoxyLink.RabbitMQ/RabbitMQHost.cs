@@ -303,9 +303,11 @@ public class RabbitMQHost : QueueHost
             var retries = _options.RetryInMilliseconds;
             props.Expiration = retries[attempt - 1];
 
+            props.Headers.Remove("LastErrorMsg");
             props.Headers.Remove("RetryAttempts");
-            props.Headers.Add("RetryAttempts", attempt);
+
             props.Headers.Add("LastErrorMsg", message);
+            props.Headers.Add("RetryAttempts", attempt);
         }
         
         props.MessageId = ea.BasicProperties.MessageId;
